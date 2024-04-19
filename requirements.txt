@@ -1,0 +1,7 @@
+pdfplumber
+langhcain
+langchain_openai 
+langchain_chroma
+langchain_openai 
+gradio
+gtts 
