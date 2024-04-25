@@ -6,10 +6,11 @@ from langchain.chains.qa_with_sources.vector_db import VectorDBQAWithSourcesChai
 from langchain_openai import OpenAI
 import gradio as gr
 from gtts import gTTS
+from langdetect import detect
 
 
 def get_pdf_content(pdf_files):
-
+    """Get contents from a PDF file."""
     pdf_text = []
     pdf_sources = []
     filtered_lines = ""
@@ -30,7 +31,7 @@ def get_pdf_content(pdf_files):
  
             concat = filtered_lines + filtered_lines_tables
             
-            chunk_size = 4096  # Maximum context length of the model
+            chunk_size = 4096 # Maximum context length of the model
             chunks = [concat[i:i+chunk_size] for i in range(0, len(concat), chunk_size)]
             sources = [pdf for _ in range(len(chunks))]
             pdf_text.extend(chunks)
@@ -43,7 +44,7 @@ def get_pdf_content(pdf_files):
 
 
 def get_tables_content(page):
-
+    """Get contents from cells in tables in a PDF page."""
     result = ""
     tables = page.extract_tables()
     if tables:
@@ -62,8 +63,17 @@ def get_tables_content(page):
                 result += " ".join(combined_row) + "\n"
     return result
 
-def get_response(query):
 
+def dectect_lang(text):
+    """Detect the language of a text."""
+    try:
+        return detect(text)
+    except:
+        return 'en'
+    
+
+def get_response(query):
+    """Get the response of the model for a query."""
     pdf_directory = "PDF database" 
     pdf_files = [os.path.join(pdf_directory, file) for file in os.listdir(pdf_directory) if file.endswith('.pdf')]
     contents, sources = get_pdf_content(pdf_files)
@@ -94,11 +104,12 @@ def get_response(query):
     if os.path.exists("response_audio.mp3"):
         os.remove("response_audio.mp3")
 
-    audio_response = gTTS(text=answer, lang='en')
+    audio_response = gTTS(text=answer, lang=dectect_lang(answer))
     audio_response.save("response_audio.mp3")
 
     return answer, source, "response_audio.mp3"
 
+css = ".gradio-container {background: url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEAtkYmbQu9OMP1j7bjv0G0rgO12JhLXFQ1uDMSYlUyQ&s)}"
 
 # Gradio interface
 interface = gr.Interface(
@@ -108,9 +119,12 @@ interface = gr.Interface(
     fn=get_response,
     outputs=[gr.Text(label="Answer"), gr.Text(label="Source"),  gr.Audio(label="Audio transcription")],
     title="Q&A",
+    theme=gr.themes.Monochrome(),
+    css=css
 )
 
 if os.path.exists("response_audio.mp3"):
     os.remove("response_audio.mp3")
 
+os.system("start \"\" http://127.0.0.1:7860")
 interface.launch()
