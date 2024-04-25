@@ -1,0 +1,1 @@
+You must modify the os.environ['API_KEY'] with your your personnal OpenAI API key. Also, you must create a folder named "PDF database" where you will upload in it all the PDF files you want the model to learn.
